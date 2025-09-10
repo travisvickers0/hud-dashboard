@@ -149,222 +149,359 @@ def index():
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-        }
-        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
-        
-        .header {
-            background: white;
-            border-radius: 12px;
-            padding: 30px;
-            margin-bottom: 30px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        }
-        
-        .sync-status {
-            background: #f0f9ff;
-            border-left: 4px solid #3b82f6;
-            padding: 15px;
-            margin: 20px 0;
-            border-radius: 6px;
-        }
-        
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-        
-        .stat-card {
-            background: white;
-            border-radius: 12px;
-            padding: 25px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-            transition: transform 0.3s;
-            cursor: pointer;
-            position: relative;
-        }
-        
-        .stat-card:hover { 
-            transform: translateY(-5px); 
-            box-shadow: 0 8px 20px rgba(0,0,0,0.12);
-        }
-        
-        .stat-card.active {
-            border: 2px solid #667eea;
-            background: #f0f4ff;
-        }
-        
-        .stat-label {
-            color: #718096;
-            font-size: 14px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 10px;
-        }
-        
-        .stat-value {
-            font-size: 32px;
-            font-weight: bold;
-            color: #2d3748;
-        }
-        
-        .filters-bar {
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-            align-items: center;
-        }
-        
-        .filter-button {
-            padding: 8px 16px;
-            border: 2px solid #e2e8f0;
-            background: white;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-weight: 500;
-        }
-        
-        .filter-button:hover {
-            border-color: #667eea;
-            background: #f0f4ff;
-        }
-        
-        .filter-button.active {
-            background: #667eea;
-            color: white;
-            border-color: #667eea;
-        }
-        
-        .search-box {
-            flex: 1;
-            min-width: 200px;
-        }
-        
-        .search-box input {
-            width: 100%;
-            padding: 10px 15px;
-            border: 2px solid #e2e8f0;
-            border-radius: 8px;
-            font-size: 14px;
-            transition: border 0.3s;
-        }
-        
-        .search-box input:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-        
-        .properties-table {
-            background: white;
-            border-radius: 12px;
-            padding: 25px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-            overflow-x: auto;
-        }
-        
-        .table-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-        
-        .result-count {
-            color: #718096;
-            font-size: 14px;
-        }
-        
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        
-        th {
-            background: #f7fafc;
-            padding: 12px;
-            text-align: left;
-            font-weight: 600;
-            color: #4a5568;
-            border-bottom: 2px solid #e2e8f0;
-            cursor: pointer;
-            user-select: none;
-        }
-        
-        th:hover {
-            background: #e2e8f0;
-        }
-        
-        td {
-            padding: 12px;
-            border-bottom: 1px solid #e2e8f0;
-        }
-        
-        tr:hover { background: #f7fafc; }
-        
-        .loading {
-            text-align: center;
-            padding: 40px;
-            color: #718096;
-        }
-        
-        .badge {
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-        
-        .badge-new { background: #fef5e7; color: #f39c12; }
-        .badge-reduced { background: #fce4e4; color: #e74c3c; }
-        .badge-active { background: #e8f5e9; color: #27ae60; }
-        .badge-removed { background: #f0f0f0; color: #666; }
-        
-        .refresh-btn {
-            background: #667eea;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-        }
-        
-        .refresh-btn:hover { background: #5a67d8; }
-        
-        select {
-            padding: 10px;
-            border: 2px solid #e2e8f0;
-            border-radius: 8px;
-            background: white;
-            cursor: pointer;
-        }
-        
-        .clear-filters {
-            background: #ef4444;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 500;
-        }
-        
-        .clear-filters:hover {
-            background: #dc2626;
-        }
-        
-        .hidden { display: none; }
+
+body { 
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+}
+
+.container { 
+    max-width: 1400px; 
+    margin: 0 auto; 
+    padding: 10px;
+}
+
+.header {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+.header h1 {
+    font-size: 24px;
+    color: #2d3748;
+    margin-bottom: 10px;
+}
+
+.sync-status {
+    background: #f0f9ff;
+    border-left: 4px solid #3b82f6;
+    padding: 12px;
+    margin: 15px 0;
+    border-radius: 6px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+}
+
+.sync-status span {
+    font-size: 12px;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    transition: transform 0.3s;
+    cursor: pointer;
+    position: relative;
+}
+
+.stat-card:hover { 
+    transform: translateY(-2px); 
+    box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+}
+
+.stat-card.active {
+    border: 2px solid #667eea;
+    background: #f0f4ff;
+}
+
+.stat-label {
+    color: #718096;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 5px;
+}
+
+.stat-value {
+    font-size: 20px;
+    font-weight: bold;
+    color: #2d3748;
+}
+
+.filters-bar {
+    background: white;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.filter-button {
+    padding: 8px 12px;
+    border: 2px solid #e2e8f0;
+    background: white;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-weight: 500;
+    font-size: 14px;
+}
+
+.search-box {
+    flex: 1;
+    min-width: 150px;
+}
+
+.search-box input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 2px solid #e2e8f0;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.properties-table {
+    background: white;
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    overflow-x: auto;
+}
+
+.table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.table-header h2 {
+    font-size: 20px;
+    color: #2d3748;
+}
+
+.result-count {
+    color: #718096;
+    font-size: 14px;
+}
+
+/* Mobile Table Styles */
+.table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 600px;
+}
+
+th {
+    background: #f7fafc;
+    padding: 10px;
+    text-align: left;
+    font-weight: 600;
+    color: #4a5568;
+    border-bottom: 2px solid #e2e8f0;
+    cursor: pointer;
+    user-select: none;
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+td {
+    padding: 10px;
+    border-bottom: 1px solid #e2e8f0;
+    font-size: 13px;
+}
+
+.badge {
+    padding: 3px 6px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.badge-new { background: #fef5e7; color: #f39c12; }
+.badge-reduced { background: #fce4e4; color: #e74c3c; }
+.badge-active { background: #e8f5e9; color: #27ae60; }
+.badge-removed { background: #f0f0f0; color: #666; }
+
+.refresh-btn {
+    background: #667eea;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+select {
+    padding: 8px;
+    border: 2px solid #e2e8f0;
+    border-radius: 6px;
+    background: white;
+    cursor: pointer;
+    font-size: 14px;
+    width: 100%;
+    max-width: 150px;
+}
+
+.clear-filters {
+    background: #ef4444;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+/* Mobile Card View for Properties */
+.mobile-cards {
+    display: none;
+}
+
+.property-card {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 10px;
+}
+
+.property-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    margin-bottom: 10px;
+}
+
+.property-card-case {
+    font-weight: bold;
+    color: #2d3748;
+}
+
+.property-card-details {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    font-size: 13px;
+    color: #4a5568;
+}
+
+.property-card-price {
+    font-size: 18px;
+    font-weight: bold;
+    color: #2d3748;
+    margin: 8px 0;
+}
+
+/* Responsive breakpoints */
+@media (max-width: 768px) {
+    .container {
+        padding: 5px;
+    }
+    
+    .header {
+        padding: 15px;
+    }
+    
+    .header h1 {
+        font-size: 20px;
+    }
+    
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+    
+    .stat-card {
+        padding: 12px;
+    }
+    
+    .stat-label {
+        font-size: 10px;
+    }
+    
+    .stat-value {
+        font-size: 18px;
+    }
+    
+    .filters-bar {
+        padding: 10px;
+    }
+    
+    select {
+        max-width: 100%;
+    }
+    
+    /* Hide table on mobile, show cards */
+    .table-wrapper {
+        display: none;
+    }
+    
+    .mobile-cards {
+        display: block;
+    }
+    
+    .sync-status {
+        font-size: 11px;
+    }
+    
+    .refresh-btn {
+        padding: 6px 12px;
+        font-size: 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .header h1 {
+        font-size: 18px;
+    }
+    
+    .stat-value {
+        font-size: 16px;
+    }
+    
+    .filters-bar {
+        gap: 8px;
+    }
+    
+    .search-box input {
+        font-size: 12px;
+        padding: 6px 10px;
+    }
+    
+    select {
+        font-size: 12px;
+        padding: 6px;
+    }
+    
+    .clear-filters {
+        font-size: 12px;
+        padding: 6px 10px;
+    }
+}
     </style>
 </head>
 <body>
@@ -470,6 +607,7 @@ def index():
                     <tr><td colspan="7" class="loading">Loading properties...</td></tr>
                 </tbody>
             </table>
+            <div class="table-wrapper"></div>
         </div>
     </div>
     
@@ -650,27 +788,57 @@ def index():
         }
         
         // Render properties table
-        function renderProperties() {
-            const tbody = document.getElementById('properties-tbody');
-            document.getElementById('result-count').textContent = filteredProperties.length;
-            
-            if (filteredProperties.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" class="loading">No properties found</td></tr>';
-                return;
-            }
-            
-            tbody.innerHTML = filteredProperties.map(p => `
-                <tr>
-                    <td><strong>${p.case_number}</strong></td>
-                    <td>${p.address || 'N/A'}</td>
-                    <td>${p.state}</td>
-                    <td><strong>$${(p.price || 0).toLocaleString()}</strong></td>
-                    <td>${p.bedrooms || 0}/${p.bathrooms || 0}</td>
-                    <td>${p.days_on_market || 0}</td>
-                    <td><span class="badge badge-${getStatusClass(p.status)}">${p.status || 'Unknown'}</span></td>
-                </tr>
-            `).join('');
-        }
+        // Render properties table AND mobile cards
+function renderProperties() {
+    const tbody = document.getElementById('properties-tbody');
+    document.getElementById('result-count').textContent = filteredProperties.length;
+    
+    if (filteredProperties.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="loading">No properties found</td></tr>';
+        return;
+    }
+    
+    // Regular table view
+    tbody.innerHTML = filteredProperties.map(p => `
+        <tr>
+            <td><strong>${p.case_number}</strong></td>
+            <td>${p.address || 'N/A'}</td>
+            <td>${p.state}</td>
+            <td><strong>$${(p.price || 0).toLocaleString()}</strong></td>
+            <td>${p.bedrooms || 0}/${p.bathrooms || 0}</td>
+            <td>${p.days_on_market || 0}</td>
+            <td><span class="badge badge-${getStatusClass(p.status)}">${p.status || 'Unknown'}</span></td>
+        </tr>
+    `).join('');
+    
+    // Create mobile cards container if it doesn't exist
+    let mobileCards = document.getElementById('mobile-cards');
+    if (!mobileCards) {
+        mobileCards = document.createElement('div');
+        mobileCards.className = 'mobile-cards';
+        mobileCards.id = 'mobile-cards';
+        document.querySelector('.properties-table').appendChild(mobileCards);
+    }
+    
+    // Mobile card view
+    mobileCards.innerHTML = filteredProperties.map(p => `
+        <div class="property-card">
+            <div class="property-card-header">
+                <div class="property-card-case">${p.case_number}</div>
+                <span class="badge badge-${getStatusClass(p.status)}">${p.status || 'Unknown'}</span>
+            </div>
+            <div class="property-card-price">$${(p.price || 0).toLocaleString()}</div>
+            <div style="font-size: 13px; color: #4a5568; margin-bottom: 8px;">
+                ${p.address || 'N/A'}
+            </div>
+            <div class="property-card-details">
+                <div><strong>State:</strong> ${p.state}</div>
+                <div><strong>Beds/Bath:</strong> ${p.bedrooms || 0}/${p.bathrooms || 0}</div>
+                <div><strong>Days on Market:</strong> ${p.days_on_market || 0}</div>
+            </div>
+        </div>
+    `).join('');
+}
         
         function getStatusClass(status) {
             if (status?.includes('New')) return 'new';
