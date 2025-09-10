@@ -6,7 +6,7 @@ Deployed on Render.com with Dropbox sync
 from flask import Flask, render_template, jsonify, request, send_file
 from flask_cors import CORS
 import sqlite3
-import pandas as pd
+# import pandas as pd  # Removed pandas to fix deployment
 from datetime import datetime, timedelta
 import json
 import os
@@ -529,10 +529,15 @@ def get_properties():
             LIMIT 100
         """
         
-        df = pd.read_sql_query(query, conn)
+        # Execute query without pandas
+        cursor = conn.execute(query)
+        columns = [description[0] for description in cursor.description]
+        properties = []
+        for row in cursor.fetchall():
+            properties.append(dict(zip(columns, row)))
+        
         conn.close()
         
-        properties = df.to_dict('records')
         return jsonify({'properties': properties})
         
     except Exception as e:
