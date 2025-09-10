@@ -815,7 +815,7 @@ def get_properties():
             WHERE p.scrape_date = (SELECT MAX(scrape_date) FROM properties)
                 AND p.status != 'Removed'
             ORDER BY p.state, p.price
-            LIMIT 100
+            LIMIT 1000
         """
         
         # Execute query without pandas
