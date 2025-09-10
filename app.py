@@ -147,7 +147,6 @@ def index():
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HUD Properties Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.plotly.com/plotly-latest.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
@@ -175,7 +174,7 @@ def index():
         
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 20px;
             margin-bottom: 30px;
         }
@@ -186,9 +185,19 @@ def index():
             padding: 25px;
             box-shadow: 0 5px 15px rgba(0,0,0,0.08);
             transition: transform 0.3s;
+            cursor: pointer;
+            position: relative;
         }
         
-        .stat-card:hover { transform: translateY(-5px); }
+        .stat-card:hover { 
+            transform: translateY(-5px); 
+            box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+        }
+        
+        .stat-card.active {
+            border: 2px solid #667eea;
+            background: #f0f4ff;
+        }
         
         .stat-label {
             color: #718096;
@@ -204,12 +213,76 @@ def index():
             color: #2d3748;
         }
         
+        .filters-bar {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .filter-button {
+            padding: 8px 16px;
+            border: 2px solid #e2e8f0;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+        
+        .filter-button:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+        
+        .filter-button.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        
+        .search-box {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .search-box input {
+            width: 100%;
+            padding: 10px 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border 0.3s;
+        }
+        
+        .search-box input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
         .properties-table {
             background: white;
             border-radius: 12px;
             padding: 25px;
             box-shadow: 0 5px 15px rgba(0,0,0,0.08);
             overflow-x: auto;
+        }
+        
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .result-count {
+            color: #718096;
+            font-size: 14px;
         }
         
         table {
@@ -224,6 +297,12 @@ def index():
             font-weight: 600;
             color: #4a5568;
             border-bottom: 2px solid #e2e8f0;
+            cursor: pointer;
+            user-select: none;
+        }
+        
+        th:hover {
+            background: #e2e8f0;
         }
         
         td {
@@ -249,6 +328,7 @@ def index():
         .badge-new { background: #fef5e7; color: #f39c12; }
         .badge-reduced { background: #fce4e4; color: #e74c3c; }
         .badge-active { background: #e8f5e9; color: #27ae60; }
+        .badge-removed { background: #f0f0f0; color: #666; }
         
         .refresh-btn {
             background: #667eea;
@@ -261,6 +341,30 @@ def index():
         }
         
         .refresh-btn:hover { background: #5a67d8; }
+        
+        select {
+            padding: 10px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+        }
+        
+        .clear-filters {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        
+        .clear-filters:hover {
+            background: #dc2626;
+        }
+        
+        .hidden { display: none; }
     </style>
 </head>
 <body>
@@ -276,21 +380,90 @@ def index():
         </div>
         
         <div class="stats-grid" id="stats-grid">
-            <div class="loading">Loading statistics...</div>
+            <div class="stat-card" onclick="filterByStatus('all')">
+                <div class="stat-label">Total Active</div>
+                <div class="stat-value" id="total-active">0</div>
+            </div>
+            <div class="stat-card" onclick="filterByStatus('New Inventory')">
+                <div class="stat-label">New Inventory</div>
+                <div class="stat-value" id="new-today">0</div>
+            </div>
+            <div class="stat-card" onclick="filterByStatus('Price Reduced')">
+                <div class="stat-label">Price Reduced</div>
+                <div class="stat-value" id="reduced-today">0</div>
+            </div>
+            <div class="stat-card" onclick="filterByStatus('Existing')">
+                <div class="stat-label">Existing</div>
+                <div class="stat-value" id="existing">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Average Price</div>
+                <div class="stat-value" id="avg-price">$0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Last Scrape</div>
+                <div class="stat-value" id="last-scrape" style="font-size: 18px;">N/A</div>
+            </div>
+        </div>
+        
+        <div class="filters-bar">
+            <select id="state-filter" onchange="applyFilters()">
+                <option value="">All States</option>
+                <option value="GA">Georgia</option>
+                <option value="FL">Florida</option>
+                <option value="TX">Texas</option>
+                <option value="AL">Alabama</option>
+                <option value="TN">Tennessee</option>
+                <option value="SC">South Carolina</option>
+                <option value="NC">North Carolina</option>
+                <option value="KY">Kentucky</option>
+                <option value="VA">Virginia</option>
+                <option value="MS">Mississippi</option>
+                <option value="WV">West Virginia</option>
+                <option value="AR">Arkansas</option>
+            </select>
+            
+            <select id="price-filter" onchange="applyFilters()">
+                <option value="">All Prices</option>
+                <option value="0-50000">Under $50k</option>
+                <option value="50000-100000">$50k - $100k</option>
+                <option value="100000-150000">$100k - $150k</option>
+                <option value="150000-200000">$150k - $200k</option>
+                <option value="200000-300000">$200k - $300k</option>
+                <option value="300000-999999999">Over $300k</option>
+            </select>
+            
+            <select id="beds-filter" onchange="applyFilters()">
+                <option value="">All Beds</option>
+                <option value="1">1 Bed</option>
+                <option value="2">2 Beds</option>
+                <option value="3">3 Beds</option>
+                <option value="4">4+ Beds</option>
+            </select>
+            
+            <div class="search-box">
+                <input type="text" id="search-input" placeholder="Search by address or case number..." onkeyup="applyFilters()">
+            </div>
+            
+            <button class="clear-filters" onclick="clearAllFilters()">Clear Filters</button>
         </div>
         
         <div class="properties-table">
-            <h2 style="margin-bottom: 20px; color: #2d3748;">Current Properties</h2>
+            <div class="table-header">
+                <h2 style="color: #2d3748;">Properties</h2>
+                <div class="result-count">Showing <span id="result-count">0</span> properties</div>
+            </div>
+            
             <table id="properties-table">
                 <thead>
                     <tr>
-                        <th>Case #</th>
-                        <th>Address</th>
-                        <th>State</th>
-                        <th>Price</th>
-                        <th>Beds/Baths</th>
-                        <th>Days on Market</th>
-                        <th>Status</th>
+                        <th onclick="sortTable('case_number')">Case # ↕</th>
+                        <th onclick="sortTable('address')">Address ↕</th>
+                        <th onclick="sortTable('state')">State ↕</th>
+                        <th onclick="sortTable('price')">Price ↕</th>
+                        <th onclick="sortTable('bedrooms')">Beds/Baths ↕</th>
+                        <th onclick="sortTable('days_on_market')">Days on Market ↕</th>
+                        <th onclick="sortTable('status')">Status ↕</th>
                     </tr>
                 </thead>
                 <tbody id="properties-tbody">
@@ -301,6 +474,12 @@ def index():
     </div>
     
     <script>
+        let allProperties = [];
+        let filteredProperties = [];
+        let currentStatusFilter = 'all';
+        let sortColumn = 'state';
+        let sortDirection = 'asc';
+        
         // Load sync status
         async function loadSyncStatus() {
             try {
@@ -320,73 +499,183 @@ def index():
                 const response = await fetch('/api/dashboard_stats');
                 const data = await response.json();
                 
-                const statsHtml = `
-                    <div class="stat-card">
-                        <div class="stat-label">Total Active</div>
-                        <div class="stat-value">${data.total_active || 0}</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-label">New Today</div>
-                        <div class="stat-value">${data.new_today || 0}</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-label">Price Reduced</div>
-                        <div class="stat-value">${data.reduced_today || 0}</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-label">Average Price</div>
-                        <div class="stat-value">$${Math.round(data.avg_price || 0).toLocaleString()}</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-label">States Tracked</div>
-                        <div class="stat-value">${data.states || 0}</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-label">Last Scrape</div>
-                        <div class="stat-value">${data.last_scrape || 'N/A'}</div>
-                    </div>
-                `;
+                document.getElementById('total-active').textContent = data.total_active || 0;
+                document.getElementById('new-today').textContent = data.new_today || 0;
+                document.getElementById('reduced-today').textContent = data.reduced_today || 0;
+                document.getElementById('avg-price').textContent = '$' + Math.round(data.avg_price || 0).toLocaleString();
+                document.getElementById('last-scrape').textContent = data.last_scrape || 'N/A';
                 
-                document.getElementById('stats-grid').innerHTML = statsHtml;
+                // Calculate existing
+                const existing = (data.total_active || 0) - (data.new_today || 0) - (data.reduced_today || 0);
+                document.getElementById('existing').textContent = Math.max(0, existing);
+                
             } catch (e) {
-                document.getElementById('stats-grid').innerHTML = 
-                    '<div class="loading">Error loading statistics</div>';
+                console.error('Error loading stats:', e);
             }
         }
         
-        // Load properties table
+        // Load properties
         async function loadProperties() {
             try {
                 const response = await fetch('/api/properties');
                 const data = await response.json();
                 
-                if (data.properties.length === 0) {
-                    document.getElementById('properties-tbody').innerHTML = 
-                        '<tr><td colspan="7" class="loading">No properties found</td></tr>';
-                    return;
-                }
+                allProperties = data.properties || [];
+                applyFilters();
                 
-                const tbody = document.getElementById('properties-tbody');
-                tbody.innerHTML = data.properties.map(p => `
-                    <tr>
-                        <td><strong>${p.case_number}</strong></td>
-                        <td>${p.address || 'N/A'}</td>
-                        <td>${p.state}</td>
-                        <td><strong>$${(p.price || 0).toLocaleString()}</strong></td>
-                        <td>${p.bedrooms || 0}/${p.bathrooms || 0}</td>
-                        <td>${p.days_on_market || 0}</td>
-                        <td><span class="badge badge-${getStatusClass(p.status)}">${p.status}</span></td>
-                    </tr>
-                `).join('');
             } catch (e) {
                 document.getElementById('properties-tbody').innerHTML = 
                     '<tr><td colspan="7" class="loading">Error loading properties</td></tr>';
             }
         }
         
+        // Filter by status (when clicking stat cards)
+        function filterByStatus(status) {
+            currentStatusFilter = status;
+            
+            // Update active card styling
+            document.querySelectorAll('.stat-card').forEach(card => {
+                card.classList.remove('active');
+            });
+            
+            if (status !== 'all') {
+                event.currentTarget.classList.add('active');
+            } else {
+                document.querySelectorAll('.stat-card')[0].classList.add('active');
+            }
+            
+            applyFilters();
+        }
+        
+        // Apply all filters
+        function applyFilters() {
+            const stateFilter = document.getElementById('state-filter').value;
+            const priceFilter = document.getElementById('price-filter').value;
+            const bedsFilter = document.getElementById('beds-filter').value;
+            const searchTerm = document.getElementById('search-input').value.toLowerCase();
+            
+            filteredProperties = allProperties.filter(prop => {
+                // Status filter
+                if (currentStatusFilter !== 'all') {
+                    if (currentStatusFilter === 'Existing') {
+                        if (prop.status === 'New Inventory' || prop.status === 'Price Reduced') {
+                            return false;
+                        }
+                    } else if (prop.status !== currentStatusFilter) {
+                        return false;
+                    }
+                }
+                
+                // State filter
+                if (stateFilter && prop.state !== stateFilter) {
+                    return false;
+                }
+                
+                // Price filter
+                if (priceFilter) {
+                    const [min, max] = priceFilter.split('-').map(Number);
+                    const price = prop.price || 0;
+                    if (price < min || price > max) {
+                        return false;
+                    }
+                }
+                
+                // Beds filter
+                if (bedsFilter) {
+                    const beds = prop.bedrooms || 0;
+                    if (bedsFilter === '4' && beds < 4) {
+                        return false;
+                    } else if (bedsFilter !== '4' && beds != bedsFilter) {
+                        return false;
+                    }
+                }
+                
+                // Search filter
+                if (searchTerm) {
+                    const searchableText = (
+                        (prop.case_number || '') + ' ' +
+                        (prop.address || '')
+                    ).toLowerCase();
+                    
+                    if (!searchableText.includes(searchTerm)) {
+                        return false;
+                    }
+                }
+                
+                return true;
+            });
+            
+            renderProperties();
+        }
+        
+        // Clear all filters
+        function clearAllFilters() {
+            document.getElementById('state-filter').value = '';
+            document.getElementById('price-filter').value = '';
+            document.getElementById('beds-filter').value = '';
+            document.getElementById('search-input').value = '';
+            currentStatusFilter = 'all';
+            
+            document.querySelectorAll('.stat-card').forEach(card => {
+                card.classList.remove('active');
+            });
+            
+            applyFilters();
+        }
+        
+        // Sort table
+        function sortTable(column) {
+            if (sortColumn === column) {
+                sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortColumn = column;
+                sortDirection = 'asc';
+            }
+            
+            filteredProperties.sort((a, b) => {
+                let valA = a[column];
+                let valB = b[column];
+                
+                if (column === 'price' || column === 'bedrooms' || column === 'days_on_market') {
+                    valA = Number(valA) || 0;
+                    valB = Number(valB) || 0;
+                }
+                
+                if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
+                if (valA > valB) return sortDirection === 'asc' ? 1 : -1;
+                return 0;
+            });
+            
+            renderProperties();
+        }
+        
+        // Render properties table
+        function renderProperties() {
+            const tbody = document.getElementById('properties-tbody');
+            document.getElementById('result-count').textContent = filteredProperties.length;
+            
+            if (filteredProperties.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="loading">No properties found</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = filteredProperties.map(p => `
+                <tr>
+                    <td><strong>${p.case_number}</strong></td>
+                    <td>${p.address || 'N/A'}</td>
+                    <td>${p.state}</td>
+                    <td><strong>$${(p.price || 0).toLocaleString()}</strong></td>
+                    <td>${p.bedrooms || 0}/${p.bathrooms || 0}</td>
+                    <td>${p.days_on_market || 0}</td>
+                    <td><span class="badge badge-${getStatusClass(p.status)}">${p.status || 'Unknown'}</span></td>
+                </tr>
+            `).join('');
+        }
+        
         function getStatusClass(status) {
             if (status?.includes('New')) return 'new';
             if (status?.includes('Reduced')) return 'reduced';
+            if (status?.includes('Removed')) return 'removed';
             return 'active';
         }
         
