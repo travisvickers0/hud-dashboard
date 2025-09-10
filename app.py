@@ -591,24 +591,23 @@ select {
                 <div class="result-count">Showing <span id="result-count">0</span> properties</div>
             </div>
             
-            <table id="properties-table">
-                <thead>
-                    <tr>
-                        <th onclick="sortTable('case_number')">Case # ↕</th>
-                        <th onclick="sortTable('address')">Address ↕</th>
-                        <th onclick="sortTable('state')">State ↕</th>
-                        <th onclick="sortTable('price')">Price ↕</th>
-                        <th onclick="sortTable('bedrooms')">Beds/Baths ↕</th>
-                        <th onclick="sortTable('days_on_market')">Days on Market ↕</th>
-                        <th onclick="sortTable('status')">Status ↕</th>
-                    </tr>
-                </thead>
-                <tbody id="properties-tbody">
-                    <tr><td colspan="7" class="loading">Loading properties...</td></tr>
-                </tbody>
-            </table>
-            <div class="table-wrapper"></div>
-        </div>
+    <div class="table-wrapper">
+        <table id="properties-table">
+            <thead>
+                <tr>
+                    <th onclick="sortTable('case_number')">Case # ↕</th>
+                    <th onclick="sortTable('address')">Address ↕</th>
+                    <th onclick="sortTable('state')">State ↕</th>
+                    <th onclick="sortTable('price')">Price ↕</th>
+                    <th onclick="sortTable('bedrooms')">Beds/Baths ↕</th>
+                 <th onclick="sortTable('days_on_market')">Days on Market ↕</th>
+                    <th onclick="sortTable('status')">Status ↕</th>
+            </tr>
+            </thead>
+         <tbody id="properties-tbody">
+                <tr><td colspan="7" class="loading">Loading properties...</td></tr>
+            </tbody>
+        </table>
     </div>
     
     <script>
